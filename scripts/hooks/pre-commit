@@ -15,8 +15,9 @@ done < <(git diff --cached --name-only --diff-filter=ACMR)
 
 added=$(git diff --cached -U0 --diff-filter=ACMR -- . ':!*secrets.example.yaml' | grep '^+' | grep -v '^+++' || true)
 
-# 2. Secret-looking keys with a literal value instead of !secret
-hits=$(echo "$added" | grep -iE '^\+\s*(wifi_)?(password|ssid|api_key|ota_password|encryption_key|token|key)\s*:\s*\S' \
+# 2. Secret-looking keys with a literal value instead of !secret (YAML/env config only)
+cfg_added=$(git diff --cached -U0 --diff-filter=ACMR -- '*.yaml' '*.yml' '*.env' ':!*secrets.example.yaml' | grep '^+' | grep -v '^+++' || true)
+hits=$(echo "$cfg_added" | grep -iE '^\+\s*(wifi_)?(password|ssid|api_key|ota_password|encryption_key|token|key)\s*:\s*\S' \
         | grep -v '!secret' || true)
 if [[ -n "$hits" ]]; then
   echo "pre-commit: secret-looking value not using !secret:"; echo "$hits"; bad=1

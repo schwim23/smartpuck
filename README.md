@@ -77,8 +77,12 @@ git switch -c feat/<short-name>
 git diff
 scripts/test.sh
 git commit -m "puck: <what changed>"
-git push -u origin feat/<short-name>
+scripts/pr.py open --gates 1,2,3,4,5,6,7   # pushes (hooks run the tests) and opens the PR
+scripts/pr.py status <number>              # files changed, mergeable, any unticked gates
+scripts/pr.py merge <number>               # squash-merge, delete branch, sync main
 ```
+
+`pr.py` needs a fine-grained GitHub token for this repo only (Contents and Pull requests: read/write) at `~/.config/smartpuck/github-token`, mode 600. `--gates` ticks those checkboxes; the rest are marked n/a. `merge` refuses while any gate is unticked. Merging in the GitHub web UI still works too.
 
 **Each merge must update these docs:**
 
