@@ -36,7 +36,7 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 - **Logs:** put the timeout *inside* the container, as in `docker exec esphome timeout 60 esphome logs /config/smart-puck.yaml --device 192.168.1.221`. An outer `timeout` orphans the process and fills the puck's API connection slots. The container has no `kill`. Use `python3 -c 'import os; os.kill(pid, 9)'`.
 - Keep `logger` at INFO. DEBUG made the API connection drop.
 - Files under `esphome/` and `homeassistant/` created by the containers are root-owned. Edit them via `docker exec` or ask the user to run `sudo`. `sudo` via `!` in-session doesn't work for this user, so give them commands to paste into a separate SSH tab.
-- The ESPHome dashboard (Device Builder) creates its own `esphome/.git` if the folder isn't a repo. If it reappears, the main repo can't track `esphome/`. Tell the user.
+- The ESPHome dashboard's "version history" setting is **off** (`version_history_enabled: false` in `esphome/.device-builder-preferences.json`). When on, it creates its own `esphome/.git`, which hides `esphome/` from this repo. Keep it off. If `esphome/.git` ever reappears, back it up with `git bundle` and remove it.
 - Firewall changes go in `open-firewall.sh` (the user runs it with sudo). Sonos push needs TCP 1400 inbound.
 - DHCP is the Verizon Fios router (192.168.1.1). UniFi is switches/APs only.
 

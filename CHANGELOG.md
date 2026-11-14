@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Turned off the ESPHome dashboard's version history so it stops creating a nested git repo in `esphome/`.
+
 ## puck-v0.1.0 (2026-11-14)
 
 - First flash of the V2 board: Waveshare display init, V2 audio (shared I2S, ES8311/ES7210, amp on GPIO15).
