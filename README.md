@@ -92,6 +92,24 @@ scripts/pr.py merge <number>               # squash-merge, delete branch, sync m
 
 The pre-push hook refuses a push that changes config files without touching these docs. If a change truly needs no doc update, put `docs: none` in the commit message.
 
+## Backups
+
+Everything not in git (Home Assistant's `.storage` and all secrets files) is backed up nightly at 3:15 AM by `scripts/backup.sh` (cron) to `~/smartpuck-backups/nightly/`, keeping 14 days. Each backup is verified after writing. The log is `~/smartpuck-backups/backup.log`. History (`home-assistant_v2.db`) is not included.
+
+These backups live on the same disk as the stack. Copying them off-box is a later improvement.
+
+Restore (restore tested 2026-11-14 into an isolated container):
+
+```bash
+scripts/backup.sh --verify ~/smartpuck-backups/nightly/<file>.tar   # check it first
+docker compose stop homeassistant esphome
+mkdir /tmp/r && tar xf <file>.tar -C /tmp/r
+sudo tar xzf /tmp/r/homeassistant.tgz -C homeassistant/
+sudo tar xzf /tmp/r/esphome.tgz -C esphome/
+cp /tmp/r/esphome.env . && chmod 600 esphome.env
+docker compose start homeassistant esphome
+```
+
 ## Testing
 
 `scripts/test.sh` runs the automatic gates: stack file, puck config, firmware compile and HA config check. After flashing, work through the on-device checklist: clock, weather ring, tap cycle, music, voice, and no error loops in the logs. Both are described in the plan.
