@@ -1,0 +1,45 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: "ghcr.io/home-assistant/home-assistant:stable"
+    volumes:
+      - ./homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+    stop_grace_period: 60s
+    privileged: true
+    network_mode: host
+    environment:
+      TZ: America/New_York
+
+  esphome:
+    container_name: esphome
+    image: ghcr.io/esphome/esphome:stable
+    volumes:
+      - ./esphome:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    env_file: ./esphome.env
+
+  whisper:                       # speech-to-text (Wyoming), added 2026-11-14 for Phase 2
+    container_name: whisper
+    image: rhasspy/wyoming-whisper:3.8.1
+    command: --model small-int8 --language en
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10300:10300"
+    volumes:
+      - ./whisper:/data
+
+  piper:                         # text-to-speech (Wyoming)
+    container_name: piper
+    image: rhasspy/wyoming-piper:2.5.3
+    command: --voice en_US-lessac-medium
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:10200:10200"
+    volumes:
+      - ./piper:/data

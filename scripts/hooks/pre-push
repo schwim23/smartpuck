@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Blocks direct pushes to main, enforces Gate 7 (docs), runs scripts/test.sh.
+# Override for main (only when Mike explicitly asks): ALLOW_MAIN_PUSH=1 git push ...
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+zero=0000000000000000000000000000000000000000
+remote="$1"
+
+while read -r lref lsha rref rsha; do
+  [[ "$lsha" == "$zero" ]] && continue          # branch deletion
+  [[ "$rref" == refs/tags/* ]] && continue       # tag push
+
+  if [[ "$rref" == refs/heads/main && "${ALLOW_MAIN_PUSH:-0}" != 1 ]]; then
+    echo "pre-push: direct pushes to main are blocked. Push a branch and merge via a pull request."
+    exit 1
+  fi
+
+  base=$(git merge-base "$remote/main" "$lsha" 2>/dev/null) || base=""
+  [[ -z "$base" ]] && { echo "pre-push: no $remote/main yet, skipping checks"; continue; }
+  changed=$(git diff --name-only "$base" "$lsha")
+
+  # Gate 7: config changes need a docs change or an explicit "docs: none"
+  if echo "$changed" | grep -qE '^(esphome/|homeassistant/|compose\.yaml|open-firewall\.sh|scripts/)'; then
+    if ! echo "$changed" | grep -qE '^(README\.md|CLAUDE\.md|CHANGELOG\.md)$' \
+       && ! git log --format=%B "$base..$lsha" | grep -qi '^docs: none'; then
+      echo "pre-push: Gate 7 failed. Config changed but README.md, CLAUDE.md and CHANGELOG.md did not."
+      echo "          Update them, or add 'docs: none' to a commit message if truly nothing changed."
+      exit 1
+    fi
+  fi
+
+  # Gates 2-5: full compile only when firmware files changed
+  if echo "$changed" | grep -q '^esphome/'; then scripts/test.sh || exit 1
+  else scripts/test.sh --quick || exit 1; fi
+done
+exit 0

@@ -1,0 +1,35 @@
+# --- Secrets: never commit ---
+secrets.yaml
+secrets.yml
+esphome.env
+*.env
+
+# --- Home Assistant: track only hand-written config ---
+homeassistant/*
+!homeassistant/configuration.yaml
+!homeassistant/automations.yaml
+!homeassistant/scripts.yaml
+!homeassistant/scenes.yaml
+!homeassistant/packages/
+!homeassistant/secrets.example.yaml
+
+# --- ESPHome dashboard state + build output ---
+esphome/.esphome/
+esphome/.device-builder*
+esphome/.receiver_peers.json
+esphome/.offloader_pairings.json
+
+# --- Regenerable / large ---
+*.bin
+*.bundle
+*.log
+logs*.txt
+*.bak
+*.bak-*
+whisper/
+piper/
+lee-src/
+.DS_Store
+
+# --- Unlicensed third-party reference configs (kept locally only) ---
+ref/

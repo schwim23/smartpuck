@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Gate 1: block secrets from being committed.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+bad=0
+
+# 1. Secret files staged by name
+while IFS= read -r f; do
+  case "$f" in
+    *secrets.example.yaml) ;;
+    *secrets.yaml|*secrets.yml|*.env|*/.storage/*|*.db|*.db-*|*.bin)
+      echo "pre-commit: refusing to commit secret/binary file: $f"; bad=1 ;;
+  esac
+done < <(git diff --cached --name-only --diff-filter=ACMR)
+
+added=$(git diff --cached -U0 --diff-filter=ACMR -- . ':!*secrets.example.yaml' | grep '^+' | grep -v '^+++' || true)
+
+# 2. Secret-looking keys with a literal value instead of !secret
+hits=$(echo "$added" | grep -iE '^\+\s*(wifi_)?(password|ssid|api_key|ota_password|encryption_key|token|key)\s*:\s*\S' \
+        | grep -v '!secret' || true)
+if [[ -n "$hits" ]]; then
+  echo "pre-commit: secret-looking value not using !secret:"; echo "$hits"; bad=1
+fi
+
+# 3. Actual secret values (read live, never stored)
+vals=$( { docker exec esphome cat /config/secrets.yaml 2>/dev/null \
+          | grep -vE '^\s*(#|$)' | sed -E 's/^[^:]+:\s*//; s/^"(.*)"$/\1/'
+          sed -E 's/^[^=]+=//' esphome.env 2>/dev/null; } | awk 'length($0)>=6')
+while IFS= read -r v; do
+  [[ -z "$v" ]] && continue
+  if grep -qF -- "$v" <<<"$added"; then
+    echo "pre-commit: a real secret value from secrets.yaml/esphome.env is in the staged changes"; bad=1; break
+  fi
+done <<<"$vals"
+
+[[ $bad -eq 0 ]] || { echo "Commit blocked (Gate 1). Fix the above or unstage the file."; exit 1; }

@@ -1,0 +1,104 @@
+# Smart Puck HA-side feeds — trimmed from Lee's ha/smart_puck_package.yaml (2026-11-14).
+# Kept: forecast ring (weather.home), track progress + play/pause (Kitchen Sonos),
+# plus an automation that keeps Living/Dining grouped with Kitchen.
+# Left out for now: Pirate Weather AQI (rest:), Music Assistant, converse script.
+template:
+  - triggers:
+      - trigger: time_pattern
+        minutes: "/10"
+      - trigger: homeassistant
+        event: start
+      - trigger: event
+        event_type: smart_puck_refresh
+      - trigger: event
+        event_type: smart_puck_test_ring
+    actions:
+      - action: weather.get_forecasts
+        target:
+          entity_id: weather.home
+        data:
+          type: hourly
+        response_variable: fc
+      - variables:
+          prob_min: 25
+          hours: "{{ fc.get('weather.home', {}).get('forecast', [])[:12] }}"
+          override: >-
+            {{ trigger.event.data.get('ring', '')
+               if (trigger.platform | default('') == 'event'
+                   and trigger.event.event_type | default('') == 'smart_puck_test_ring')
+               else '' }}
+          ring_str: >-
+            {%- set ns = namespace(out=[]) -%}
+            {%- for h in hours -%}
+              {%- set t = h.temperature | float(0) | round(0) | int -%}
+              {%- set c = h.get('condition', '') | string -%}
+              {%- set amt = h.get('precipitation', 0) | float(0) -%}
+              {%- set pp = h.get('precipitation_probability', 100) | float(100) -%}
+              {%- set p = 0 if (pp < prob_min or amt <= 0)
+                          else (4 if 'lightning' in c
+                          else (5 if 'snow' in c
+                          else (3 if amt >= 0.3
+                          else (2 if amt >= 0.1
+                          else 1)))) -%}
+              {%- set ns.out = ns.out + [ t ~ ':' ~ p ] -%}
+            {%- endfor -%}
+            {{ override if override else (ns.out | join(',')) }}
+    sensor:
+      - name: "Smart Puck Forecast Ring"
+        unique_id: smart_puck_forecast_ring
+        icon: mdi:chart-donut
+        state: "{{ ring_str }}"
+        attributes:
+          low: "{{ (hours | map(attribute='temperature') | map('float') | list | min | round(0) | int) if hours else 0 }}"
+          high: "{{ (hours | map(attribute='temperature') | map('float') | list | max | round(0) | int) if hours else 0 }}"
+          hours_returned: "{{ hours | count }}"
+
+  - triggers:
+      - trigger: time_pattern
+        seconds: "/15"
+      - trigger: state
+        entity_id: media_player.kitchen_kitchen
+    sensor:
+      - name: "Smart Puck Track Progress"
+        unique_id: smart_puck_track_progress
+        icon: mdi:progress-clock
+        unit_of_measurement: "%"
+        state: >-
+          {% set mp = 'media_player.kitchen_kitchen' %}
+          {% set dur = state_attr(mp, 'media_duration') | float(0) %}
+          {% if states(mp) == 'playing' and dur > 0 %}
+            {% set upd = state_attr(mp, 'media_position_updated_at') %}
+            {% set pos = state_attr(mp, 'media_position') | float(0)
+                         + ((now() - upd).total_seconds() if upd else 0) %}
+            {{ ([0, (100 * pos / dur) | round(1), 100] | sort)[1] }}
+          {% else %}
+            0
+          {% endif %}
+
+script:
+  smart_puck_playpause:
+    alias: "Smart Puck play/pause"
+    mode: single
+    sequence:
+      - action: media_player.media_play_pause
+        target: {entity_id: media_player.kitchen_kitchen}
+
+automation:
+  - id: smart_puck_group_kitchen_living
+    alias: "Smart Puck: keep Living/Dining grouped with Kitchen"
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: media_player.kitchen_kitchen
+        to: "playing"
+    conditions:
+      - condition: template
+        value_template: >-
+          {{ 'media_player.living_dining_living_dining'
+             not in (state_attr('media_player.kitchen_kitchen', 'group_members') or []) }}
+    actions:
+      - action: media_player.join
+        target: {entity_id: media_player.kitchen_kitchen}
+        data:
+          group_members:
+            - media_player.living_dining_living_dining
