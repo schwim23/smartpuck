@@ -38,7 +38,7 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 - Files under `esphome/` and `homeassistant/` created by the containers are root-owned. Edit them via `docker exec` or ask the user to run `sudo`. `sudo` via `!` in-session doesn't work for this user, so give them commands to paste into a separate SSH tab.
 - The ESPHome dashboard's "version history" setting is **off** (`version_history_enabled: false` in `esphome/.device-builder-preferences.json`). When on, it creates its own `esphome/.git`, which hides `esphome/` from this repo. Keep it off. If `esphome/.git` ever reappears, back it up with `git bundle` and remove it.
 - Firewall changes go in `open-firewall.sh` (the user runs it with sudo). Sonos push needs TCP 1400 inbound.
-- DHCP is the Verizon Fios router (192.168.1.1). UniFi is switches/APs only.
+- DHCP is the Verizon Fios router (192.168.1.1). UniFi is switches/APs only. Reservations ("Static lease type") exist for prometheus (.21) and the puck (.221).
 
 ## Device facts
 
