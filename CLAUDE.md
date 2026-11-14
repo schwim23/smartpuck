@@ -16,6 +16,7 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 ## Workflow rules
 
 - Never commit directly to `main`. Use `feat/<name>`, `fix/<name>` or `docs/<name>` branches. Merge through a GitHub PR (squash).
+- PRs from the CLI: `scripts/pr.py open --gates <gates that actually passed>`, then `status <n>` and `merge <n>`. Only tick gates that really ran. Gate 6 needs the user's confirmation. **Always ask the user before `merge`.** The token is at `~/.config/smartpuck/github-token`: never print, echo or commit it. If it expires (90 days), the user makes a new one.
 - Before merging, run `scripts/test.sh` and get the user to confirm the on-device smoke checklist after an OTA flash.
 - Commit prefixes: `puck:`, `ha:`, `stack:`, `docs:`.
 - Ask before pushing, merging, tagging or flashing. Flashing changes a device in the user's kitchen.

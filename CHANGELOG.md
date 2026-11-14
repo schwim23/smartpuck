@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Added `scripts/pr.py` to open, check and squash-merge pull requests from the command line.
+
 - Reserved the puck's address (192.168.1.221) on the Fios router so OTA and HA links survive reboots.
 
 - Turned off the ESPHome dashboard's version history so it stops creating a nested git repo in `esphome/`.
