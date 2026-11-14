@@ -50,7 +50,7 @@ sudo ./open-firewall.sh        # once: opens 8123, 6052, 5353/udp, 1400 (Sonos p
 | Home Assistant | http://192.168.1.21:8123 |
 | ESPHome dashboard | http://192.168.1.21:6052 |
 | Whisper / Piper | 127.0.0.1:10300 / 127.0.0.1:10200 (Wyoming) |
-| Puck | 192.168.1.221 (DHCP) |
+| Puck | 192.168.1.221 (reserved on the Fios router) |
 
 ## Flashing the puck
 

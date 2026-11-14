@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Reserved the puck's address (192.168.1.221) on the Fios router so OTA and HA links survive reboots.
+
 - Turned off the ESPHome dashboard's version history so it stops creating a nested git repo in `esphome/`.
 
 ## puck-v0.1.0 (2026-11-14)
