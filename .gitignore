@@ -33,3 +33,5 @@ lee-src/
 
 # --- Unlicensed third-party reference configs (kept locally only) ---
 ref/
+__pycache__/
+*.pyc
