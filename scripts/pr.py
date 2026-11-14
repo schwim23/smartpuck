@@ -61,7 +61,8 @@ def cmd_open(a):
     title = a.title or git("log", "-1", "--format=%s")
     body = build_body(set(a.gates.split(",")) if a.gates else set(), a.what or log, a.why or "")
     existing = api("GET", f"/pulls?head=schwim23:{branch}&state=open")
-    if existing:
+    if existing:  # updating: keep the PR's title unless --title was given
+        title = a.title or existing[0]["title"]
         pr = api("PATCH", f"/pulls/{existing[0]['number']}", {"title": title, "body": body})
     else:
         pr = api("POST", "/pulls", {"title": title, "head": branch, "base": "main", "body": body})
