@@ -50,6 +50,7 @@ esphome:
             id: backlight
             brightness: 80%
         - lvgl.page.show: main_page   # always boot to the clock face (page 0), keeps cycle order predictable
+        - script.execute: apply_wake_sensitivity   # re-apply the restored sensitivity choice
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -784,10 +785,28 @@ micro_wake_word:
   id: mww
   models:
     - model: hey_jarvis
+      id: hey_jarvis
+    - model: okay_nabu         # added: trained on far more varied voices; works better for kids
+      id: okay_nabu
   on_wake_word_detected:
     - script.execute: duck_music # drop the Sonos BEFORE listening — the mic is across the room from it
     - micro_wake_word.stop:      # stop listening for the wake word while the assistant runs (frees audio/CPU)
     - voice_assistant.start:
+
+# WAKE WORD SENSITIVITY — HA select; lowers each model's probability cutoff at runtime, no reflash.
+# Values mirror the HA Voice PE's levels (cutoff out of 255). Higher sensitivity = more false wakes.
+select:
+  - platform: template
+    name: "Wake word sensitivity"
+    id: wake_sensitivity
+    entity_category: config
+    icon: mdi:ear-hearing
+    optimistic: true
+    restore_value: true
+    options: ["Default", "Moderately sensitive", "Very sensitive"]
+    initial_option: "Moderately sensitive"
+    on_value:
+      - script.execute: apply_wake_sensitivity
 
 voice_assistant:
   id: va
@@ -1545,6 +1564,17 @@ globals:
     initial_value: "false"
 
 script:
+  - id: apply_wake_sensitivity
+    then:
+      - lambda: |-
+          const std::string level = id(wake_sensitivity).current_option();
+          uint8_t jarvis = id(hey_jarvis)->get_default_probability_cutoff();   // 0.97 * 255
+          uint8_t nabu   = id(okay_nabu)->get_default_probability_cutoff();
+          if (level == "Moderately sensitive") { jarvis = 235; nabu = 176; }   // 0.92 / 0.69
+          else if (level == "Very sensitive")  { jarvis = 212; nabu = 143; }   // 0.83 / 0.56
+          id(hey_jarvis)->set_probability_cutoff(jarvis);
+          id(okay_nabu)->set_probability_cutoff(nabu);
+          ESP_LOGI("wake", "sensitivity=%s cutoff hey_jarvis=%u okay_nabu=%u", level.c_str(), jarvis, nabu);
   # Sole gate for arming the wake word — every start site calls this instead of
   # micro_wake_word.start so the wake_switch (ears-on-a-dedicated-satellite handoff) is
   # honored by boot, VA re-arm paths, tap-to-stop, AND the self-heal watchdog alike.

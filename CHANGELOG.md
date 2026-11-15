@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Added "Okay Nabu" as a second wake word and a Wake word sensitivity setting in HA, so lighter and higher voices wake the puck.
+
 - Nightly backup of Home Assistant state and all secrets (`scripts/backup.sh`, cron 3:15 AM, 14 days, verified). Restore tested.
 
 - Added `scripts/pr.py` to open, check and squash-merge pull requests from the command line.

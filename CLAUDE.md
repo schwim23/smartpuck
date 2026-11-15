@@ -49,7 +49,7 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 - Shared I2S bus, ES8311 DAC 0x18, ES7210 ADC 0x40 (mic channel left, 24dB), PA enable GPIO15 always on, 16 kHz.
 - Display: ST77916 via `mipi_spi` at 40 MHz, Waveshare init sequence, reset on PCA9554 pin 2. The clock font needs every glyph it shows. "--:--" needed `-`.
 - `thermostat_page` has `skip: true` (no climate entity yet). The occupancy sensor is missing, so the screen treats the room as occupied.
-- Wake word: `hey_jarvis`. The user wants "Hey Bestie" later (needs microWakeWord training).
+- Wake words: `hey_jarvis` and `okay_nabu` (added because "Hey Jarvis" missed the user's daughter; its model favors adult voices). HA select "Wake word sensitivity" sets each model's cutoff at runtime via `set_probability_cutoff` (script `apply_wake_sensitivity`, re-applied on boot). Levels out of 255: Default = model defaults (jarvis 0.97), Moderately = jarvis 235 / nabu 176, Very = 212 / 143. If false wakes appear, step it down. The user wants "Hey Bestie" later (needs microWakeWord training).
 
 ## Home Assistant
 
