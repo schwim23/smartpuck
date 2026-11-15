@@ -10,7 +10,7 @@ What it does today:
 - **Hold to talk:** press and hold anywhere on the screen for about half a second (or click the side button furthest from USB-C) to talk without the wake word. This is how kids use it, because the wake word model misses children's voices
 - **Wake word sensitivity** setting on the puck's HA device page (Default / Moderately / Very sensitive). Higher means fewer misses but more false wakes
 
-Last updated: 2026-11-14 · Current firmware: `puck-v0.1.0`
+Last updated: 2026-11-14 · Current firmware: `puck-v0.2.0`
 
 ## Hardware
 

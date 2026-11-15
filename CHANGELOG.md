@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+## puck-v0.2.0 (2026-11-14)
+
 - Hold to talk: press and hold the screen ~0.6 s to talk without the wake word (the wake word model misses kids' voices).
 - Wake word sensitivity setting in HA (Default / Moderately / Very sensitive).
 
