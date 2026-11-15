@@ -41,6 +41,8 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 - Firewall changes go in `open-firewall.sh` (the user runs it with sudo). Sonos push needs TCP 1400 inbound.
 - DHCP is the Verizon Fios router (192.168.1.1). UniFi is switches/APs only. Reservations ("Static lease type") exist for prometheus (.21) and the puck (.221).
 
+- Backups: `scripts/backup.sh` runs from cron at 03:15 to `~/smartpuck-backups/nightly/` (14 days, mode 600, contains secrets: never print or copy them elsewhere). Check `~/smartpuck-backups/backup.log` if asked whether backups work. Use `--verify FILE` to test one.
+
 ## Device facts
 
 - Board is **V2**. Lee's original config targets V1. Audio and display init were rewritten. Don't copy V1 pins or init back from `lee-src/`.

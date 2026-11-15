@@ -4,6 +4,8 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Nightly backup of Home Assistant state and all secrets (`scripts/backup.sh`, cron 3:15 AM, 14 days, verified). Restore tested.
+
 - Added `scripts/pr.py` to open, check and squash-merge pull requests from the command line.
 
 - Reserved the puck's address (192.168.1.221) on the Fios router so OTA and HA links survive reboots.
