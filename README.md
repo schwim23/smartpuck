@@ -7,6 +7,8 @@ What it does today:
 - Clock face with weather and an hourly forecast ring
 - Music page for the Kitchen Sonos (Living/Dining auto-grouped), with play/pause and grouped volume
 - Voice assistant: "Hey Jarvis", local speech-to-text (Whisper) and text-to-speech (Piper)
+- **Hold to talk:** press and hold anywhere on the screen for about half a second (or click the side button furthest from USB-C) to talk without the wake word. This is how kids use it, because the wake word model misses children's voices
+- **Wake word sensitivity** setting on the puck's HA device page (Default / Moderately / Very sensitive). Higher means fewer misses but more false wakes
 
 Last updated: 2026-11-14 · Current firmware: `puck-v0.1.0`
 

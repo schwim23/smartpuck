@@ -4,6 +4,9 @@ One plain-English line per merged change. New lines go under **Unreleased**; on 
 
 ## Unreleased
 
+- Hold to talk: press and hold the screen ~0.6 s to talk without the wake word (the wake word model misses kids' voices).
+- Wake word sensitivity setting in HA (Default / Moderately / Very sensitive).
+
 - Nightly backup of Home Assistant state and all secrets (`scripts/backup.sh`, cron 3:15 AM, 14 days, verified). Restore tested.
 
 - Added `scripts/pr.py` to open, check and squash-merge pull requests from the command line.

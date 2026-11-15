@@ -49,7 +49,7 @@ If nothing needs changing, say so in the commit message with `docs: none`. The p
 - Shared I2S bus, ES8311 DAC 0x18, ES7210 ADC 0x40 (mic channel left, 24dB), PA enable GPIO15 always on, 16 kHz.
 - Display: ST77916 via `mipi_spi` at 40 MHz, Waveshare init sequence, reset on PCA9554 pin 2. The clock font needs every glyph it shows. "--:--" needed `-`.
 - `thermostat_page` has `skip: true` (no climate entity yet). The occupancy sensor is missing, so the screen treats the room as occupied.
-- Wake word: `hey_jarvis`. The user wants "Hey Bestie" later (needs microWakeWord training).
+- Wake word: `hey_jarvis` only. It never woke for the user's daughter at any sensitivity, and neither did `okay_nabu` (tested 2026-11-14, then removed), but push-to-talk understood her fine. So kids use **hold-to-talk**: script `hold_to_talk` (600 ms, armed in touchscreen `on_touch`, which fires once per touch) calls `ptt_toggle`. Global `hold_fired` makes the following release swallow the tap. Keep that guard on every `on_release` branch you add. HA select "Wake word sensitivity" (Default / Moderately 235 / Very 212, out of 255) uses `set_probability_cutoff` (script `apply_wake_sensitivity`, re-applied on boot). The user wants "Hey Bestie" later, trained on family voice clips so it works for the kids.
 
 ## Home Assistant
 

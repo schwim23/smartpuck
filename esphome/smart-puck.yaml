@@ -50,6 +50,7 @@ esphome:
             id: backlight
             brightness: 80%
         - lvgl.page.show: main_page   # always boot to the clock face (page 0), keeps cycle order predictable
+        - script.execute: apply_wake_sensitivity   # re-apply the restored sensitivity choice
 
 esp32:
   board: esp32-s3-devkitc-1
@@ -784,10 +785,26 @@ micro_wake_word:
   id: mww
   models:
     - model: hey_jarvis
+      id: hey_jarvis
   on_wake_word_detected:
     - script.execute: duck_music # drop the Sonos BEFORE listening — the mic is across the room from it
     - micro_wake_word.stop:      # stop listening for the wake word while the assistant runs (frees audio/CPU)
     - voice_assistant.start:
+
+# WAKE WORD SENSITIVITY — HA select; lowers each model's probability cutoff at runtime, no reflash.
+# Values mirror the HA Voice PE's levels (cutoff out of 255). Higher sensitivity = more false wakes.
+select:
+  - platform: template
+    name: "Wake word sensitivity"
+    id: wake_sensitivity
+    entity_category: config
+    icon: mdi:ear-hearing
+    optimistic: true
+    restore_value: true
+    options: ["Default", "Moderately sensitive", "Very sensitive"]
+    initial_option: "Default"
+    on_value:
+      - script.execute: apply_wake_sensitivity
 
 voice_assistant:
   id: va
@@ -1368,9 +1385,20 @@ touchscreen:
           else z = 3;                     // bottom-right -> increase
           id(tap_zone) = z;
           id(touch_debug).publish_state(str_sprintf("(%d,%d) z=%d", x, y, z));
+      # HOLD-TO-TALK (added 2026-11-14): press and hold ~0.6s anywhere -> push-to-talk, for voices the
+      # wake word model misses (e.g. kids). Not armed while a modal or a fired timer owns the screen.
+      - if:
+          condition: {lambda: 'return id(modal_open) == 0 && !id(timer_done);'}
+          then:
+            - script.execute: hold_to_talk
     on_release:
+      - script.stop: hold_to_talk          # released before the hold threshold -> it's a normal tap
+      - if:   # HOLD FIRED -> push-to-talk already started; swallow this release entirely
+          condition: {lambda: 'return id(hold_fired);'}
+          then:
+            - lambda: 'id(tap_zone) = -1;'
       - if:   # AN OPEN MODAL (doorbell/alert) -> any tap dismisses it (and consumes the tap)
-          condition: {lambda: 'return id(modal_open) != 0;'}
+          condition: {lambda: 'return id(modal_open) != 0 && !id(hold_fired);'}
           then:
             - script.stop: doorbell_show   # kill the pending auto-close or it fires later
             - script.stop: alert_show      #   and yanks the user off a page he navigated to himself
@@ -1379,13 +1407,13 @@ touchscreen:
             - script.execute: modal_hide
             - lambda: 'id(tap_zone) = -1;'
       - if:   # A FIRED TIMER -> any tap dismisses it (and consumes the tap)
-          condition: {lambda: 'return id(timer_done);'}
+          condition: {lambda: 'return id(timer_done) && !id(hold_fired);'}
           then:
             - script.stop: timer_finished_show
             - script.execute: timer_hide
             - lambda: 'id(tap_zone) = -1;'
       - if:   # VOICE ACTIVE -> any tap cancels it (and consumes the tap so it doesn't also navigate)
-          condition: {lambda: 'return id(va_active);'}
+          condition: {lambda: 'return id(va_active) && !id(hold_fired);'}
           then:
             - script.stop: va_watchdog   # cancel first — else it fires later on a dead interaction
             - script.execute: unduck_music
@@ -1461,8 +1489,13 @@ touchscreen:
               - lvgl.page.is_showing: main_page
           then:
             - homeassistant.action: {action: script.smart_puck_playpause, data: {}}  # same smart toggle as the media page
+      - lambda: 'id(hold_fired) = false;'
 
 globals:
+  - id: hold_fired          # hold-to-talk triggered during this touch; its release must not act as a tap
+    type: bool
+    restore_value: no
+    initial_value: "false"
   - id: ui_target          # on-device working target (NAN = follow HA); optimistic +/- feel
     type: float
     restore_value: no
@@ -1545,6 +1578,21 @@ globals:
     initial_value: "false"
 
 script:
+  - id: hold_to_talk
+    mode: restart
+    then:
+      - delay: 600ms
+      - lambda: 'id(hold_fired) = true;'
+      - script.execute: ptt_toggle     # same path as the BOOT button: duck, stop wake word, listen
+  - id: apply_wake_sensitivity
+    then:
+      - lambda: |-
+          const std::string level = id(wake_sensitivity).current_option();
+          uint8_t jarvis = id(hey_jarvis)->get_default_probability_cutoff();   // 0.97 * 255
+          if (level == "Moderately sensitive") jarvis = 235;   // 0.92
+          else if (level == "Very sensitive")  jarvis = 212;   // 0.83
+          id(hey_jarvis)->set_probability_cutoff(jarvis);
+          ESP_LOGI("wake", "sensitivity=%s cutoff hey_jarvis=%u", level.c_str(), jarvis);
   # Sole gate for arming the wake word — every start site calls this instead of
   # micro_wake_word.start so the wake_switch (ears-on-a-dedicated-satellite handoff) is
   # honored by boot, VA re-arm paths, tap-to-stop, AND the self-heal watchdog alike.
